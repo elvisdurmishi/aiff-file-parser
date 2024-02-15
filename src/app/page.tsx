@@ -1,95 +1,61 @@
-import Image from "next/image";
-import styles from "./page.module.css";
+'use client'
+import {useState} from "react";
+import * as mm from 'music-metadata-browser';
 
 export default function Home() {
-  return (
-    <main className={styles.main}>
-      <div className={styles.description}>
-        <p>
-          Get started by editing&nbsp;
-          <code className={styles.code}>src/app/page.tsx</code>
-        </p>
+    const [file, setFile] = useState<File | null>(null);
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files.length > 0) {
+            setFile(e.target.files[0]);
+        }
+    };
+
+    const getAIFFDuration = async (file: File) => {
+        try {
+            const metadata = await mm.parseBlob(file);
+            console.log("metadata", metadata);
+            console.log("duration", metadata.format.duration)
+            if (metadata.format.duration != null) {
+                console.log("duration in seconds", `${Math.floor(metadata.format.duration)} seconds`)
+            }
+        } catch (error) {
+            console.log("error", error)
+        }
+    }
+
+    const handleUpload = () => {
+        try {
+            if (file) {
+                const reader = new FileReader();
+
+                reader.onload = async (event) => {
+                    if (event.target && event.target.result) {
+                        // Create a Blob from the AIFF file content
+                        const fileBlob = new Blob([event.target.result], {type: 'audio/aiff'});
+
+                        // Create a new File object with the Blob and file name
+                        const uploadedFile = new File([fileBlob], file.name, {type: 'audio/aiff'});
+
+                        // Handle the File object as needed
+                        console.log('Uploaded AIFF File:', uploadedFile);
+
+                        await getAIFFDuration(uploadedFile);
+                    }
+                };
+            } else {
+                console.error('No file selected');
+            }
+        } catch (error) {
+            console.error('Error handling file', error);
+        }
+    };
+
+    return (
         <div>
-          <a
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{" "}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className={styles.vercelLogo}
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
+            <h1>File Upload</h1>
+            <input type="file" onChange={handleFileChange}/>
+            <button onClick={handleUpload}>Upload</button>
         </div>
-      </div>
-
-      <div className={styles.center}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
-
-      <div className={styles.grid}>
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Docs <span>-&gt;</span>
-          </h2>
-          <p>Find in-depth information about Next.js features and API.</p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Learn <span>-&gt;</span>
-          </h2>
-          <p>Learn about Next.js in an interactive course with&nbsp;quizzes!</p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Templates <span>-&gt;</span>
-          </h2>
-          <p>Explore starter templates for Next.js.</p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Deploy <span>-&gt;</span>
-          </h2>
-          <p>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
-    </main>
-  );
+    );
 }
